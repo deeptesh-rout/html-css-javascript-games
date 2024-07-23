@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Rock, Paper & Scissor</title>
+
+		<link rel="icon" href="scissors.png" />
+		<link rel="stylesheet" href="css/style.min.css" />
+	</head>
+
+	<body>
+		<main class="main-page">
+			<div class="title">Rock, Paper & Scissor</div>
+			<div class="main-container">
+				<div class="score-container">
+					<div id="player-score">Player: 0</div>
+					<div id="computer-score">Computer: 0</div>
+				</div>
+				<div class="hand-container">
+					<div class="player-hand">
+						<img id="player-hand" src="images/rock.png" alt="" />
+					</div>
+					<div class="computer-hand">
+						<img id="computer-hand" src="images/rock.png" alt="" />
+					</div>
+				</div>
+				<div class="player-choice-container">
+					<h2>Select an option</h2>
+					<div class="btn-wrapper">
+						<button id="rock" class="player-option">Rock</button>
+						<button id="paper" class="player-option">Paper</button>
+						<button id="scissor" class="player-option">Scissor</button>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<script src="script.js"></script>
+	</body>
+</html>

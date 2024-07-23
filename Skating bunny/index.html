@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title> Skating bunny</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+<link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<canvas class="webgl"></canvas>
+
+<div id="instructions"> - Press to jump - </div>
+
+<div id="credits">
+  <p><a href="https://github.com/deeptesh-rout" target="blank">my other code</a> | <a href="" target="blank">epic.net</a></p>
+</div>
+
+<script type="x-shader/x-vertex" id="reflectorVertexShader">
+  uniform mat4 textureMatrix;
+  varying vec4 vUvReflection;
+  varying vec2 vUv; 
+
+  #include <common>
+  #include <shadowmap_pars_vertex>
+  #include <logdepthbuf_pars_vertex>
+
+void main() {
+	#include <beginnormal_vertex>
+	#include <defaultnormal_vertex>
+	#include <begin_vertex>
+
+	vUvReflection = textureMatrix * vec4( position, 1.0 );
+	vUv = uv;
+
+	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+	#include <logdepthbuf_vertex>
+	#include <worldpos_vertex>
+	#include <shadowmap_vertex>
+    
+}
+</script> 
+  
+<script type="x-shader/x-fragment" id="reflectorFragmentShader">
+  uniform vec3 color;
+	uniform sampler2D tDiffuse;
+  uniform sampler2D tScratches;
+  varying vec4 vUvReflection;
+	varying vec2 vUv;
+  
+  #include <common>
+  #include <packing>
+  #include <lights_pars_begin>
+  #include <shadowmap_pars_fragment>
+  #include <shadowmask_pars_fragment>
+	#include <logdepthbuf_pars_fragment>
+  
+  vec4 blur9(sampler2D image, vec4 uv, vec2 resolution, vec2 direction) {
+        vec4 color = vec4(0.0);
+        vec2 off1 = vec2(1.3846153846) * direction;
+        vec2 off2 = vec2(3.2307692308) * direction;
+        color += texture2DProj(image, uv) * 0.2270270270;
+        color += texture2DProj(image, uv + vec4(off1 / resolution, off1 / resolution)) * 0.3162162162;
+        color += texture2DProj(image, uv - vec4(off1 / resolution, off1 / resolution)) * 0.3162162162;
+        color += texture2DProj(image, uv + vec4(off2 / resolution, off2 / resolution)) * 0.0702702703;
+        color += texture2DProj(image, uv - vec4(off2 / resolution, off2 / resolution)) * 0.0702702703;
+        return color;
+  }
+	
+  float blendOverlay( float base, float blend ) {
+			return( base < 0.5 ? ( 2.0 * base * blend ) : ( 1.0 - 2.0 * ( 1.0 - base ) * ( 1.0 - blend ) ) );
+	}
+
+	vec3 blendOverlay( vec3 base, vec3 blend ) {
+		return vec3( blendOverlay( base.r, blend.r ), blendOverlay( base.g, blend.g ), blendOverlay( base.b, blend.b ) );
+	}
+
+	void main() {
+			#include <logdepthbuf_fragment>
+        
+        
+			vec4 displacement = vec4( sin(vUvReflection.y * 3.) * .05, sin(vUvReflection.x * 3.) * .05, 0.0, 0.0);
+      vec2 resolution = vec2(30., 30.);
+      vec4 base = blur9( tDiffuse, vUvReflection + displacement, resolution, vec2(1., 0.) ) * .25;
+      base += blur9( tDiffuse, vUvReflection + displacement, resolution, vec2(-1., 0.) ) * .25;
+      base += blur9( tDiffuse, vUvReflection + displacement, resolution, vec2(0, 1.) ) * .25;
+      base += blur9( tDiffuse, vUvReflection + displacement, resolution, vec2(0, -1.) ) * .25;
+    
+      vec4 scratchesCol = texture2D( tScratches, vUv);
+    
+			vec3 col = mix(color, base.rgb, .5);
+      col.rgb += scratchesCol.r * .02;
+	    col.gb -= scratchesCol.g * .01;
+      col.gb -= (1.0 - getShadowMask() ) * .015;
+    
+      gl_FragColor = vec4(col, 1.0);
+			#include <tonemapping_fragment>
+			#include <colorspace_fragment>
+		}
+</script>  
+<script type="x-shader/x-vertex" id="simulationVertexShader">
+  precision highp float;
+
+  uniform float time;
+  varying vec2 vUv;
+
+  void main() {
+    vUv = uv;
+    vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * modelViewPosition; 
+  }
+</script>
+
+<script type="x-shader/x-fragment" id="simulationFragmentShader">
+  // fragment shader
+  precision highp float;
+
+  uniform sampler2D inputTexture;
+  uniform vec2 blade1PosOld;
+  uniform vec2 blade1PosNew;
+  uniform float strength;
+  uniform float time;
+  varying vec2 vUv;
+
+  float lineSegment(vec2 p, vec2 a, vec2 b, float thickness) {
+      vec2 pa = p - a;
+      vec2 ba = b - a;
+      float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
+      float idk = length(pa - ba*h);
+      return smoothstep(thickness, .2 * thickness, idk);
+  }
+
+  void main(void) {
+    vec4 prevTexture = texture2D(inputTexture, vUv);
+    vec3 col = prevTexture.rgb * .999;
+    if (strength>0.){
+        float space = .001;
+        float crease = .001;
+        float thickness = .001 + strength * .001;
+        float leftRed = lineSegment(vUv + space, blade1PosOld, blade1PosNew, thickness);
+        float leftGreen = lineSegment(vUv + space + crease, blade1PosOld, blade1PosNew, thickness);
+        float rightRed = lineSegment(vUv - space - crease, blade1PosOld, blade1PosNew, thickness);
+        float rightGreen = lineSegment(vUv - space, blade1PosOld, blade1PosNew, thickness);
+        col.r += ( leftRed + rightRed ) * strength * 3.0;
+        col.g += ( leftGreen + rightGreen) * strength * 3.0;
+        col.r = clamp(col.r, .0, 1.0);
+        col.g = clamp(col.g, .0, 1.0);
+    }
+    gl_FragColor = vec4(col, 1.0);
+}
+</script>
+
+<script type="x-shader/x-fragment" id="outlineFragmentShader">
+  uniform vec3 color;
+  void main(void) {
+      gl_FragColor = vec4( color, 1.0);
+  }
+</script>
+
+<script type="x-shader/x-vertex" id="outlineVertexShader">
+  uniform float size;
+  uniform float time;
+
+  void main() {
+    vec3 transformed = position + normal * size * (1.0 + abs( sin ( position.y * time * .02 ) * 2.0 ));
+    vec4 modelViewPosition = modelViewMatrix * vec4(transformed, 1.0);
+    gl_Position = projectionMatrix * modelViewPosition; 
+  }
+</script>
+<!-- partial -->
+  <script type="module" src="./script.js"></script>
+
+</body>
+</html>
