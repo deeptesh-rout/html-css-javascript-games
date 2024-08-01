@@ -1,0 +1,186 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap");
+html {
+  font-size: 2.8vh;
+}
+@media screen and (orientation: portrait) {
+  html {
+    font-size: 2.8vw;
+  }
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  color: #000038;
+  font-family: "Archivo Black", "Arial Black", sans-serif;
+  font-size: 1.5rem;
+  perspective: 100rem;
+  transform-style: preserve-3d;
+  background: linear-gradient(white, #919ea3 400%);
+  overflow: hidden;
+}
+
+.snow-game__level-marker {
+  position: absolute;
+  z-index: 1;
+  top: 1.1rem;
+  left: 1rem;
+}
+.snow-game__button {
+  background: white;
+  border: 1px solid grey;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  text-transform: uppercase;
+  font-family: "Archivo Black", "Arial Black", sans-serif;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+.snow-game__fullscreen-button {
+  position: absolute;
+  z-index: 1;
+  top: 0.5rem;
+  left: 4rem;
+}
+.snow-game__wrapper {
+  position: relative;
+  width: 30rem;
+  height: 35rem;
+  perspective: 100rem;
+}
+.snow-game__level {
+  position: absolute;
+  left: 0;
+  top: calc(var(--time) * var(--cell) * -1);
+  display: flex;
+  flex-wrap: wrap;
+  height: 100%;
+  transform: rotate3d(1, 0, 0, 45deg) translateZ(calc(var(--time) * -0.5 * var(--cell))) translateY(calc(var(--time) * -0.1 * var(--cell)));
+  transform-style: preserve-3d;
+  transition: top 0.3s linear, transform 0.3s linear;
+}
+.snow-game__cell {
+  position: relative;
+  width: var(--cell);
+  height: var(--cell);
+}
+.snow-game__cell--rock {
+  transform: rotate3d(1, 0, 0, -45deg);
+  transform-origin: bottom;
+}
+.snow-game__cell--rock:before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  width: 80%;
+  height: 60%;
+  border-radius: 3rem 3rem 1rem 1rem;
+  background: radial-gradient(circle at 30% 80%, white -200%, #919ea3);
+  box-shadow: 0 0.5rem 1rem 0 rgba(145, 158, 163, 0.5);
+}
+.snow-game__cell--rock:nth-child(2n):before {
+  border-radius: 3rem 1rem 1rem 1rem;
+}
+.snow-game__cell--rock:nth-child(3n):before {
+  border-radius: 1rem 5rem 1rem 1rem;
+}
+.snow-game__cell--rock:nth-child(4n):before {
+  height: 50%;
+}
+.snow-game__cell--rock:nth-child(5n):before {
+  height: 70%;
+}
+.snow-game__cell--lava:before {
+  content: "";
+  position: absolute;
+  top: 40%;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(180deg, orange, #ff7d66);
+  background-size: 100% 200%;
+  animation: lava;
+  animation-duration: 2s;
+  animation-iteration-count: infinite;
+}
+@keyframes lava {
+  0%, 100% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 0 100%;
+  }
+}
+.snow-game__cell--end {
+  background-image: linear-gradient(45deg, #000038 25%, transparent 25%), linear-gradient(-45deg, #000038 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000038 75%), linear-gradient(-45deg, transparent 75%, #000038 75%);
+  background-size: var(--cell) var(--cell);
+  background-position: 0 0, 0 calc(var(--cell) / 2), calc(var(--cell) / 2) calc(var(--cell) / -2), calc(var(--cell) / -2) 0px;
+}
+.snow-game__player {
+  position: absolute;
+  top: calc( var(--top) * var(--cell) + (var(--cell) * 0.5) - var(--lifes) * 1rem );
+  left: calc( var(--left) * var(--cell) + (var(--cell) * 0.5) - var(--lifes) * 1rem );
+  width: calc(var(--lifes) * 2rem);
+  height: calc(var(--lifes) * 2rem);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 70%, white -200%, #eb80b1);
+  transform: rotate3d(1, 0, 0, -45deg);
+  transform-origin: bottom;
+  transition: top 0.3s linear, left 0.5s ease, width 0.5s ease, height 0.5s ease, transform 0.3s cubic-bezier(0.17, 0.67, 0.54, 1), box-shadow 0.3s cubic-bezier(0.17, 0.67, 0.54, 1);
+  box-shadow: 0 0.5rem 1rem 0 rgba(145, 158, 163, 0.5);
+}
+.snow-game__player--jump {
+  transform: rotate3d(1, 0, 0, -45deg) translateZ(var(--cell)) translateY(calc(var(--cell) * -1));
+  box-shadow: 0 var(--cell) 1rem 0 rgba(145, 158, 163, 0.5);
+}
+.snow-game__start, .snow-game__score {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.6);
+  cursor: default;
+}
+.snow-game__start--hidden, .snow-game__score--hidden {
+  display: none;
+}
+.snow-game__title {
+  font-size: 10vw;
+}
+.snow-game__title--highlighted {
+  color: #eb80b1;
+}
+.snow-game__tutorial {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+.snow-game__tutorial-mobile {
+  display: none;
+}
+.snow-game__score {
+  font-size: 10vw;
+  text-transform: uppercase;
+}
+.snow-game__click-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+@media screen and (max-width: 767px) {
+  .snow-game__tutorial {
+    font-size: 1.5rem;
+  }
+}
